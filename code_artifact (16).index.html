@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>伊赫莱®安全性管理 - 临床药师工作台</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 FontAwesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Noto Sans SC -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+                    },
+                    colors: {
+                        medical: {
+                            50: '#f0fdf9',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #e2e8f0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .app-shell {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .pill-9mg {
+            background: linear-gradient(135deg, #b85d43 0%, #8c3b26 100%);
+            border-radius: 9999px;
+            box-shadow: inset 0 2px 3px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .pill-3mg {
+            background: linear-gradient(135deg, #a6462a 0%, #732914 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 2px 3px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 sm:p-4 text-slate-800">
+
+    <!-- 移动端小程序仿真容器 -->
+    <div id="app" class="app-shell w-full sm:w-[430px] h-screen sm:h-[860px] bg-slate-50 sm:rounded-[36px] flex flex-col overflow-hidden relative border-0 sm:border-[8px] sm:border-slate-900">
+        
+        <!-- 顶部状态栏与小程序胶囊导航 -->
+        <header class="bg-gradient-to-r from-medical-800 to-medical-700 text-white pt-3 pb-3 px-4 shrink-0 z-20 shadow-sm">
+            <div class="flex justify-between items-center text-[11px] opacity-80 mb-2">
+                <span>21:23</span>
+                <div class="flex items-center gap-1.5">
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2 min-w-0 pr-2">
+                    <button id="backBtn" onclick="navigateBack()" class="hidden w-7 h-7 rounded-full bg-white/15 flex items-center justify-center shrink-0 active:scale-95 transition">
+                        <i class="fas fa-chevron-left text-xs"></i>
+                    </button>
+                    <div class="truncate">
+                        <h1 id="headerTitle" class="font-bold text-base tracking-tight flex items-center gap-1.5 truncate">
+                            <span>伊赫莱® 药师安全管理</span>
+                            <span class="text-[10px] bg-amber-400/20 text-amber-200 border border-amber-300/30 px-1.5 py-0.5 rounded-md font-medium shrink-0">2026共识版</span>
+                        </h1>
+                        <p id="headerSubtitle" class="text-[11px] text-medical-100 truncate">PAM通路抑制剂全周期随访SOP工作台</p>
+                    </div>
+                </div>
+                <!-- 微信小程序模拟胶囊 -->
+                <div class="flex items-center bg-black/20 rounded-full px-2.5 py-1 border border-white/15 gap-2.5 shrink-0">
+                    <i class="fas fa-ellipsis-h text-xs"></i>
+                    <div class="w-[1px] h-3 bg-white/30"></div>
+                    <i class="far fa-dot-circle text-xs"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容滚动区域 -->
+        <main id="mainContent" class="flex-1 overflow-y-auto no-scrollbar pb-24">
+            <!-- 动态视图注入区 -->
+        </main>
+
+        <!-- 底部导航栏 -->
+        <nav id="bottomNav" class="bg-white border-t border-slate-200 px-2 py-2 flex justify-around items-center shrink-0 z-20">
+            <button onclick="switchTab('workbench')" id="nav-workbench" class="nav-item flex flex-col items-center justify-center w-1/4 py-1 text-medical-700 font-semibold">
+                <i class="fas fa-user-md text-lg mb-0.5"></i>
+                <span class="text-[11px]">随访工作台</span>
+            </button>
+            <button onclick="switchTab('intake')" id="nav-intake" class="nav-item flex flex-col items-center justify-center w-1/4 py-1 text-slate-400 hover:text-slate-600">
+                <i class="fas fa-file-medical text-lg mb-0.5"></i>
+                <span class="text-[11px]">首次建档</span>
+            </button>
+            <button onclick="switchTab('decision')" id="nav-decision" class="nav-item flex flex-col items-center justify-center w-1/4 py-1 text-slate-400 hover:text-slate-600">
+                <i class="fas fa-stethoscope text-lg mb-0.5"></i>
+                <span class="text-[11px]">AE分级决策</span>
+            </button>
+            <button onclick="switchTab('knowledge')" id="nav-knowledge" class="nav-item flex flex-col items-center justify-center w-1/4 py-1 text-slate-400 hover:text-slate-600">
+                <i class="fas fa-book-medical text-lg mb-0.5"></i>
+                <span class="text-[11px]">共识SOP库</span>
+            </button>
+        </nav>
+
+        <!-- 全局自定义模态框/话术复制弹窗 -->
+        <div id="modalOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div id="modalBox" class="bg-white w-full sm:w-[390px] rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl transform transition-all max-h-[85vh] flex flex-col">
+                <div class="flex justify-between items-center pb-3 border-b border-slate-100 shrink-0">
+                    <h3 id="modalTitle" class="font-bold text-slate-800 text-base flex items-center gap-2"></h3>
+                    <button onclick="closeModal()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+                <div id="modalBody" class="py-4 overflow-y-auto text-sm text-slate-600 space-y-3"></div>
+                <div id="modalFooter" class="pt-3 border-t border-slate-100 flex gap-2 shrink-0"></div>
+            </div>
+        </div>
+
+        <!-- 轻量 Toast 提示 -->
+        <div id="toast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white text-xs px-4 py-2.5 rounded-full shadow-lg z-50 flex items-center gap-2 whitespace-nowrap">
+            <i class="fas fa-check-circle text-emerald-400"></i>
+            <span id="toastText">已复制到剪贴板</span>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ============================================================================
+         * 核心临床数据库与专家共识规则引擎
+         * ============================================================================
+         */
+        let patients = [
+            {
+                id: 'P2026001',
+                name: '林婉清',
+                age: 54,
+                gender: '女',
+                phone: '138****6291',
+                diagnosis: 'HR+/HER2- 晚期乳腺癌 (PIK3CA突变)',
+                regimen: '伊那利塞 + 哌柏西利 + 氟维司群',
+                startDate: '2026-11-13',
+                dayOnDrug: 7,
+                cycle: 1,
+                currentDose: 9,
+                status: 'active',
+                eGFR: 78,
+                bmi: 28.6,
+                baselineFPG: 6.1,
+                baselineHbA1c: 6.0,
+                riskFactors: ['年龄≥45岁', 'BMI≥28 kg/m² (中国肥胖标准)', 'HbA1c ≥5.7% (糖尿病前期)'],
+                riskLevel: 'high',
+                prophylacticMetformin: true,
+                currentAntidiabetic: '二甲双胍缓释片 500mg qd (C1D1预防性启用)',
+                latestFPG: 9.8,
+                fpgHistory: [
+                    { day: 'D1(基线)', fpg: 6.1, note: '基线评估高危，C1D1启动二甲双胍预防' },
+                    { day: 'D4', fpg: 7.4, note: '无三多一少症状，继续低碳水饮食' },
+                    { day: 'D7(今日)', fpg: 9.8, note: '触发Grade 2预警！已通知主治医生评估强化降糖' }
+                ],
+                activeAEs: [
+                    { type: 'hyperglycemia', grade: 2, label: '高血糖 Grade 2 (FPG 9.8)', action: '原剂量继续+密切监测，通知医生评估降糖药' },
+                    { type: 'stomatitis', grade: 1, label: '口腔炎 Grade 1', action: '地塞米松含漱液预防，禁用含酒精漱口水' }
+                ],
+                nextFollowUp: '今日 (加密至每2-3天1次)',
+                urgentAlert: true,
+                alertReason: 'FPG 9.8 mmol/L (Grade 2) + 处于D7高发窗口'
+            },
+            {
+                id: 'P2026002',
+                name: '陈美玲',
+                age: 62,
+                gender: '女',
+                phone: '139****4108',
+                diagnosis: 'HR+/HER2- 复发转移性乳腺癌 (PIK3CA突变)',
+                regimen: '伊那利塞 + 哌柏西利 + 氟维司群',
+                startDate: '2026-11-02',
+                dayOnDrug: 18,
+                cycle: 1,
+                currentDose: 6,
+                status: 'active',
+                eGFR: 48,
+                bmi: 23.4,
+                baselineFPG: 5.3,
+                baselineHbA1c: 5.5,
+                riskFactors: ['年龄≥45岁', '高血压病史'],
+                riskLevel: 'high',
+                prophylacticMetformin: false,
+                currentAntidiabetic: '未用药',
+                latestFPG: 6.8,
+                fpgHistory: [
+                    { day: 'D1', fpg: 5.3, note: 'eGFR 48，遵循说明书起始剂量6mg qd' },
+                    { day: 'D4', fpg: 6.2, note: '正常范围' },
+                    { day: 'D7', fpg: 7.1, note: '正常达标' },
+                    { day: 'D14', fpg: 6.8, note: '提醒D15复查血常规(警惕哌柏西利联用中性粒细胞减少)' }
+                ],
+                activeAEs: [],
+                nextFollowUp: '2天后 (第3周常规随访)',
+                urgentAlert: false,
+                alertReason: ''
+            },
+            {
+                id: 'P2026003',
+                name: '周晓芸',
+                age: 43,
+                gender: '女',
+                phone: '136****8820',
+                diagnosis: 'HR+/HER2- 晚期乳腺癌 (PIK3CA突变)',
+                regimen: '伊那利塞 + 哌柏西利 + 氟维司群',
+                startDate: '2026-10-08',
+                dayOnDrug: 43,
+                cycle: 2,
+                currentDose: 9,
+                status: 'paused',
+                eGFR: 92,
+                bmi: 24.1,
+                baselineFPG: 5.2,
+                baselineHbA1c: 5.4,
+                riskFactors: [],
+                riskLevel: 'low',
+                prophylacticMetformin: false,
+                currentAntidiabetic: '二甲双胍 500mg bid + 达格列净 10mg qd',
+                latestFPG: 14.6,
+                fpgHistory: [
+                    { day: 'D1', fpg: 5.2, note: '低危基线，9mg qd起始' },
+                    { day: 'D14', fpg: 8.1, note: 'Grade 1，饮食运动干预' },
+                    { day: 'D28', fpg: 10.5, note: 'Grade 2，启动二甲双胍' },
+                    { day: 'D42', fpg: 14.6, note: 'Grade 3！已立即通知主治医生暂停伊那利塞，排查酮症' }
+                ],
+                activeAEs: [
+                    { type: 'hyperglycemia', grade: 3, label: '高血糖 Grade 3 (FPG 14.6)', action: '已暂停伊那利塞，排查酮症，若7天内降至≤8.9可原剂量恢复' }
+                ],
+                nextFollowUp: '今日 (紧急24h内复诊跟进)',
+                urgentAlert: true,
+                alertReason: 'Grade 3高血糖暂停用药中，需追踪血酮及7天恢复情况'
+            }
+        ];
+
+        // 暂存当前页面的可复制话术，避免内联HTML引号转义冲突
+        let currentActiveScripts = {
+            patient: '',
+            doctor: ''
+        };
+
+        let state = {
+            currentTab: 'workbench',
+            selectedPatientId: null,
+            filterMode: 'all',
+            searchQuery: '',
+            decisionSubTab: 'hyperglycemia'
+        };
+
+        /**
+         * ============================================================================
+         * 工具函数与通用交互
+         * ============================================================================
+         */
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastText').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2400);
+        }
+
+        function copyToClipboard(text) {
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('话术/报告已复制，可直接粘贴发送');
+            } catch (err) {
+                showToast('复制失败，请手动长按选择文本');
+            }
+        }
+
+        function openModal(titleHtml, bodyHtml, footerHtml) {
+            document.getElementById('modalTitle').innerHTML = titleHtml;
+            document.getElementById('modalBody').innerHTML = bodyHtml;
+            document.getElementById('modalFooter').innerHTML = footerHtml;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+        }
+
+        function getFollowUpStage(day) {
+            if (day <= 1) {
+                return {
+                    stage: '首次接触 (D1建档期)',
+                    freq: '建档当日完成评估与宣教',
+                    badgeColor: 'bg-indigo-100 text-indigo-700',
+                    focus: '核查FPG/HbA1c/eGFR、评估高危因素、发放关爱包及血糖仪演示'
+                };
+            } else if (day <= 7) {
+                return {
+                    stage: `第1周 (D${day}/7 · 高发窗口)`,
+                    freq: '每3天随访1次 (D1-7)',
+                    badgeColor: 'bg-rose-100 text-rose-700',
+                    focus: '伊那利塞高血糖中位发生时间7天！主动致电获取FPG，筛查早期口腔炎'
+                };
+            } else if (day <= 28) {
+                return {
+                    stage: `第2-4周 (D${day}/28)`,
+                    freq: '每周随访1次 (若Grade 2加密至每2-3天)',
+                    badgeColor: 'bg-amber-100 text-amber-800',
+                    focus: 'D13口腔炎/D15腹泻中位高发期；D15提醒复查血常规(警惕中性粒细胞减少)'
+                };
+            } else if (day <= 90) {
+                return {
+                    stage: `第2-3月 (D${day} · C${Math.ceil(day/28)})`,
+                    freq: '每2周随访1次 (M2-M3)',
+                    badgeColor: 'bg-teal-100 text-teal-800',
+                    focus: 'D29皮疹中位发生期；满3月提醒复查HbA1c及肾功能，评估治疗依从性'
+                };
+            } else {
+                return {
+                    stage: `第4月及以后 (D${day} · C${Math.ceil(day/28)})`,
+                    freq: '每28天(4周)随访1次',
+                    badgeColor: 'bg-slate-100 text-slate-700',
+                    focus: '保住治疗持续时间(DOT)，每3个月复查HbA1c与肾功能以调整降糖方案'
+                };
+            }
+        }
+
+        function switchTab(tabName) {
+            state.currentTab = tabName;
+            state.selectedPatientId = null;
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('text-medical-700', 'font-semibold');
+                el.classList.add('text-slate-400');
+            });
+            const activeNav = document.getElementById(`nav-${tabName}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-slate-400');
+                activeNav.classList.add('text-medical-700', 'font-semibold');
+            }
+
+            document.getElementById('backBtn').classList.add('hidden');
+            document.getElementById('bottomNav').classList.remove('hidden');
+
+            renderView();
+        }
+
+        function openPatientDetail(patientId) {
+            state.selectedPatientId = patientId;
+            document.getElementById('backBtn').classList.remove('hidden');
+            document.getElementById('bottomNav').classList.add('hidden');
+            renderPatientDetailView(patientId);
+        }
+
+        function navigateBack() {
+            switchTab('workbench');
+        }
+
+        function renderView() {
+            const container = document.getElementById('mainContent');
+            container.scrollTop = 0;
+
+            if (state.selectedPatientId) {
+                renderPatientDetailView(state.selectedPatientId);
+                return;
+            }
+
+            switch (state.currentTab) {
+                case 'workbench':
+                    document.getElementById('headerTitle').innerHTML = `<span>伊赫莱® 药师安全管理</span><span class="text-[10px] bg-amber-400/20 text-amber-200 border border-amber-300/30 px-1.5 py-0.5 rounded-md font-medium shrink-0">2026共识版</span>`;
+                    document.getElementById('headerSubtitle').innerText = 'PAM通路抑制剂全周期随访SOP工作台';
+                    renderWorkbenchView();
+                    break;
+                case 'intake':
+                    document.getElementById('headerTitle').innerText = '首次购药建档与基线风险评估';
+                    document.getElementById('headerSubtitle').innerText = '依据2026版高血糖及PAM不良反应专家共识';
+                    renderIntakeView();
+                    break;
+                case 'decision':
+                    document.getElementById('headerTitle').innerText = '不良反应分级与剂量调整决策引擎';
+                    document.getElementById('headerSubtitle').innerText = '高血糖 · 口腔炎 · 腹泻 · 皮疹 · 阶梯减量';
+                    renderDecisionEngineView();
+                    break;
+                case 'knowledge':
+                    document.getElementById('headerTitle').innerText = '专家共识核心路径与用药速查';
+                    document.getElementById('headerSubtitle').innerText = 'INAVO120临床数据与双共识推荐意见';
+                    renderKnowledgeView();
+                    break;
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 视图 1: 药师随访工作台
+         * ============================================================================
+         */
+        function renderWorkbenchView() {
+            const urgentCount = patients.filter(p => p.urgentAlert).length;
+            const highRiskCount = patients.filter(p => p.riskLevel === 'high').length;
+
+            let filteredPatients = patients;
+            if (state.filterMode === 'urgent') {
+                filteredPatients = filteredPatients.filter(p => p.urgentAlert);
+            } else if (state.filterMode === 'highRisk') {
+                filteredPatients = filteredPatients.filter(p => p.riskLevel === 'high');
+            }
+
+            if (state.searchQuery.trim() !== '') {
+                const q = state.searchQuery.trim().toLowerCase();
+                filteredPatients = filteredPatients.filter(p => 
+                    p.name.toLowerCase().includes(q) || 
+                    p.id.toLowerCase().includes(q)
+                );
+            }
+
+            const html = `
+                <div class="p-4 space-y-4">
+                    <!-- 顶部核心指标看板 -->
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <div onclick="setFilter('all')" class="cursor-pointer bg-white p-3 rounded-2xl border ${state.filterMode === 'all' ? 'border-medical-500 ring-2 ring-medical-500/20' : 'border-slate-100'} shadow-xs transition">
+                            <div class="text-xs text-slate-500 flex items-center justify-between">
+                                <span>在管患者</span>
+                                <i class="fas fa-users text-medical-600"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-slate-800 mt-1">${patients.length}</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">全周期随访中</div>
+                        </div>
+
+                        <div onclick="setFilter('urgent')" class="cursor-pointer bg-white p-3 rounded-2xl border ${state.filterMode === 'urgent' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-100'} shadow-xs transition">
+                            <div class="text-xs text-slate-500 flex items-center justify-between">
+                                <span>紧急预警</span>
+                                <i class="fas fa-exclamation-triangle text-rose-500"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-rose-600 mt-1">${urgentCount}</div>
+                            <div class="text-[10px] text-rose-500 mt-0.5 font-medium">FPG>8.9 / 暂停期</div>
+                        </div>
+
+                        <div onclick="setFilter('highRisk')" class="cursor-pointer bg-white p-3 rounded-2xl border ${state.filterMode === 'highRisk' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-100'} shadow-xs transition">
+                            <div class="text-xs text-slate-500 flex items-center justify-between">
+                                <span>高血糖高危</span>
+                                <i class="fas fa-shield-alt text-amber-500"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-amber-600 mt-1">${highRiskCount}</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">需密切监测FPG</div>
+                        </div>
+                    </div>
+
+                    <!-- 共识关键窗口期提示条 -->
+                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-3 flex items-start gap-2.5">
+                        <div class="w-7 h-7 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="fas fa-clock text-sm"></i>
+                        </div>
+                        <div class="text-xs leading-relaxed text-amber-900">
+                            <span class="font-bold">首月黄金窗口期提醒：</span>伊那利塞关键AE中位发生时间均在首月内——<span class="font-semibold underline decoration-amber-400">高血糖7天、口腔炎13天、腹泻15天、皮疹29天</span>。第1周务必执行每3天1次FPG随访！
+                        </div>
+                    </div>
+
+                    <!-- 患者搜索与快捷新建 -->
+                    <div class="flex items-center gap-2 pt-1">
+                        <div class="relative flex-1">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" value="${state.searchQuery}" oninput="handleSearch(this.value)" placeholder="搜索患者姓名或编号..." class="w-full bg-white border border-slate-200 rounded-full pl-8 pr-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-medical-500">
+                        </div>
+                        <button onclick="switchTab('intake')" class="text-xs bg-medical-600 hover:bg-medical-700 text-white px-3.5 py-1.5 rounded-full font-medium shadow-xs flex items-center gap-1 active:scale-95 transition shrink-0">
+                            <i class="fas fa-plus"></i> 首次建档
+                        </button>
+                    </div>
+
+                    <!-- 患者卡片列表 -->
+                    <div class="space-y-3">
+                        ${filteredPatients.length === 0 ? `
+                            <div class="bg-white rounded-2xl p-8 text-center border border-slate-100 text-slate-400 text-xs">
+                                未找到匹配的患者档案，请更换筛选条件或点击“首次建档”录入新患者。
+                            </div>
+                        ` : filteredPatients.map(p => {
+                            const stageInfo = getFollowUpStage(p.dayOnDrug);
+                            const fpgColor = p.latestFPG > 13.9 ? 'text-rose-600 bg-rose-50 border-rose-200' :
+                                             p.latestFPG > 8.9 ? 'text-amber-600 bg-amber-50 border-amber-200' :
+                                             'text-emerald-700 bg-emerald-50 border-emerald-200';
+                            const statusBadge = p.status === 'paused' 
+                                ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-600 text-white animate-pulse">暂停用药中</span>'
+                                : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-medical-100 text-medical-800">当前剂量 ${p.currentDose}mg qd</span>`;
+
+                            return `
+                                <div onclick="openPatientDetail('${p.id}')" class="bg-white rounded-2xl p-4 border ${p.urgentAlert ? 'border-rose-300 shadow-sm' : 'border-slate-200/80'} active:scale-[0.99] transition cursor-pointer relative overflow-hidden">
+                                    ${p.urgentAlert ? '<div class="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>' : ''}
+                                    
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-base text-slate-800">${p.name}</span>
+                                            <span class="text-xs text-slate-500">${p.age}岁</span>
+                                            ${p.riskLevel === 'high' ? '<span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-md">高血糖高危</span>' : ''}
+                                        </div>
+                                        ${statusBadge}
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center gap-1.5 mb-3">
+                                        <span class="text-[11px] px-2 py-0.5 rounded-md font-medium ${stageInfo.badgeColor}">
+                                            ${stageInfo.stage}
+                                        </span>
+                                        <span class="text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                            <i class="far fa-calendar-check mr-1"></i>${stageInfo.freq}
+                                        </span>
+                                    </div>
+
+                                    <div class="grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs mb-2.5">
+                                        <div>
+                                            <div class="text-[10px] text-slate-400">最新空腹FPG</div>
+                                            <div class="font-bold text-sm mt-0.5 px-1.5 py-0.5 rounded-md inline-block border ${fpgColor}">
+                                                ${p.latestFPG} <span class="text-[10px] font-normal">mmol/L</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] text-slate-400">基线HbA1c / eGFR</div>
+                                            <div class="font-semibold text-slate-700 mt-1">${p.baselineHbA1c}% / ${p.eGFR}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] text-slate-400">下次随访</div>
+                                            <div class="font-semibold ${p.urgentAlert ? 'text-rose-600' : 'text-medical-700'} mt-1 truncate">${p.nextFollowUp}</div>
+                                        </div>
+                                    </div>
+
+                                    ${p.urgentAlert ? `
+                                        <div class="bg-rose-50 text-rose-700 text-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between font-medium">
+                                            <span class="truncate pr-2"><i class="fas fa-bell mr-1.5"></i>${p.alertReason}</span>
+                                            <i class="fas fa-chevron-right text-[10px] shrink-0"></i>
+                                        </div>
+                                    ` : `
+                                        <div class="flex justify-between items-center text-[11px] text-slate-500">
+                                            <span class="truncate max-w-[260px]"><i class="fas fa-pills text-medical-600 mr-1"></i>降糖方案：${p.currentAntidiabetic}</span>
+                                            <span class="text-medical-600 font-medium shrink-0">进入处置 <i class="fas fa-angle-right"></i></span>
+                                        </div>
+                                    `}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        function setFilter(mode) {
+            state.filterMode = mode;
+            renderWorkbenchView();
+        }
+
+        function handleSearch(val) {
+            state.searchQuery = val;
+            renderWorkbenchView();
+        }
+
+        /**
+         * ============================================================================
+         * 视图 2: 患者全周期随访详情与实时决策处置
+         * ============================================================================
+         */
+        function renderPatientDetailView(patientId) {
+            const p = patients.find(item => item.id === patientId);
+            if (!p) return;
+
+            document.getElementById('headerTitle').innerText = `${p.name} (${p.age}岁) · 随访处置`;
+            document.getElementById('headerSubtitle').innerText = `用药第 ${p.dayOnDrug} 天 · 当前方案: 伊那利塞 ${p.currentDose}mg`;
+
+            const stageInfo = getFollowUpStage(p.dayOnDrug);
+
+            let fpgGradeInfo = {};
+            if (p.latestFPG <= 8.9) {
+                fpgGradeInfo = {
+                    grade: 'Grade 1 / 目标范围内 (FPG ≤ 8.9 mmol/L)',
+                    color: 'emerald',
+                    badge: '✅ 正常达标 · 原剂量继续',
+                    drugAction: '无需调整伊那利塞剂量，按原方案继续治疗。',
+                    pharmacistActions: [
+                        '记录本次FPG数值至档案，确认下次监测节点',
+                        '强化正向反馈，肯定患者饮食及运动依从行为',
+                        '询问有无新发口腔炎、腹泻、皮疹或血常规异常',
+                        '无需立即通知医生，复诊时携带完整血糖记录即可'
+                    ],
+                    patientScript: `“${p.name}您好，您的空腹血糖（${p.latestFPG} mmol/L）控制得非常好！说明您的饮食和配合非常到位，伊那利塞无需调整剂量，继续保持这个节奏。记得按时测下一次空腹血糖，有数值随时发给我。”`,
+                    doctorScript: `【常规随访报备】患者${p.name}，伊那利塞(${p.currentDose}mg qd)治疗D${p.dayOnDrug}，最新空腹血糖${p.latestFPG} mmol/L（≤8.9 mmol/L达标），无新增严重AE，继续原方案治疗。`
+                };
+            } else if (p.latestFPG <= 13.9) {
+                fpgGradeInfo = {
+                    grade: 'Grade 2 / 中度升高 (8.9 < FPG ≤ 13.9 mmol/L)',
+                    color: 'amber',
+                    badge: '⚠️ 中度升高 · 干预并加密随访',
+                    drugAction: '等待医生指示——可在原剂量继续，但需立即启动/强化降糖治疗并密切监测。若持续7天 >11.1–13.9 mmol/L，咨询内分泌专科医生。',
+                    pharmacistActions: [
+                        '询问是否有“三多一少”（口渴/多尿/乏力）等高血糖症状',
+                        '立即启动低碳水饮食干预（主食换全谷物≥1/3，餐后散步30min）',
+                        '明确建议患者今天/本周内联系主治医生，评估启用首选降糖药（二甲双胍）',
+                        '将随访频次加密至每2-3天1次，强调不得自行停药或减量！'
+                    ],
+                    patientScript: `“${p.name}您好，您今天空腹血糖 ${p.latestFPG} mmol/L 偏高，这是伊那利塞靶向起效的常见表现，先别慌，但需要我们共同把它控制下来。饮食上立刻调整：主食换成燕麦/全谷物，多吃蔬菜，餐后散步30分钟。请今天联系主治医生评估是否加用二甲双胍，在医生指示前千万不要自行停药！我每2-3天会再跟进您的血糖。”`,
+                    doctorScript: `【Grade 2高血糖预警】医生您好，患者${p.name}（伊那利塞 ${p.currentDose}mg qd 治疗D${p.dayOnDrug}），今日空腹血糖升至 ${p.latestFPG} mmol/L（Grade 2：8.9-13.9 mmol/L），目前无酮症表现。已指导患者加强饮食运动干预，建议评估是否启动/强化一线口服降糖药（首选二甲双胍），暂维持伊那利塞原剂量密切观察。`
+                };
+            } else {
+                fpgGradeInfo = {
+                    grade: 'Grade 3+ / 严重升高 (FPG > 13.9 mmol/L)',
+                    color: 'rose',
+                    badge: '🚨 严重超标 · 必须暂停并紧急处置',
+                    drugAction: p.latestFPG > 27.8 
+                        ? 'Grade 4 (>27.8 mmol/L)：立即暂停用药！评估血容量不足和酮症并补液，咨询内分泌科。降至≤8.9后降低一个剂量水平；若30天内复发永久停药。'
+                        : 'Grade 3 (13.9-27.8 mmol/L)：立即暂停伊那利塞！评估酮症并强化降糖。若7天内降至≤8.9 mmol/L可原剂量恢复；若>7天恢复或30天内复发，降低一个剂量水平。',
+                    pharmacistActions: [
+                        '要求患者今天立即就医（不可等待常规复诊）！',
+                        '立即排查酮症症状：恶心呕吐、腹痛、呼吸深快、意识模糊',
+                        '若有酮症症状或FPG≥16.7 mmol/L，立即急诊检测血β-羟丁酸及动脉血气',
+                        '立即电话通知主治医生暂停伊那利塞，并提醒停药后血糖可能快速下降，严防低血糖！'
+                    ],
+                    patientScript: `“${p.name}您好，您今天的空腹血糖 ${p.latestFPG} mmol/L 升高幅度较大，属于3级高血糖！请您今天务必立即联系主治医生或前往医院就诊，按医生指示暂停伊那利塞并强化降糖。如果您现在感到恶心呕吐、腹痛或呼吸困难，请立刻拨打120去急诊！另外注意停药后血糖会下降，若用了降糖药要注意防低血糖。”`,
+                    doctorScript: `【紧急预警：Grade 3+高血糖】医生您好，患者${p.name}（伊那利塞 ${p.currentDose}mg qd 治疗D${p.dayOnDrug}），今日空腹血糖高达 ${p.latestFPG} mmol/L（>13.9 mmol/L）！已要求患者今日立即就医排查血酮体/DKA，请立即指示暂停伊那利塞并启动强化降糖治疗（首选非胰岛素路径，必要时内分泌会诊）。`
+                };
+            }
+
+            // 存入全局暂存器供按钮安全调用
+            currentActiveScripts.patient = fpgGradeInfo.patientScript;
+            currentActiveScripts.doctor = fpgGradeInfo.doctorScript;
+
+            const colorMap = {
+                emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-800', header: 'bg-emerald-600' },
+                amber: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-900', header: 'bg-amber-500' },
+                rose: { bg: 'bg-rose-50', border: 'border-rose-300', text: 'text-rose-900', header: 'bg-rose-600' }
+            };
+            const theme = colorMap[fpgGradeInfo.color];
+
+            const html = `
+                <div class="p-4 space-y-4">
+                    <!-- 患者基线与用药状态卡 -->
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
+                        <div class="flex justify-between items-start border-b border-slate-100 pb-3 mb-3">
+                            <div>
+                                <div class="text-xs text-slate-400">${p.diagnosis}</div>
+                                <div class="text-sm font-bold text-slate-800 mt-0.5">${p.regimen}</div>
+                            </div>
+                            <span class="px-2 py-1 rounded-lg text-xs font-bold shrink-0 ${p.riskLevel === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">
+                                ${p.riskLevel === 'high' ? '高血糖高危' : '中/低危'}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                            <div class="bg-slate-50 p-2 rounded-xl">
+                                <div class="text-[10px] text-slate-400">基线FPG</div>
+                                <div class="font-bold text-slate-700 mt-0.5">${p.baselineFPG}</div>
+                            </div>
+                            <div class="bg-slate-50 p-2 rounded-xl">
+                                <div class="text-[10px] text-slate-400">基线HbA1c</div>
+                                <div class="font-bold text-slate-700 mt-0.5">${p.baselineHbA1c}%</div>
+                            </div>
+                            <div class="bg-slate-50 p-2 rounded-xl">
+                                <div class="text-[10px] text-slate-400">eGFR</div>
+                                <div class="font-bold ${p.eGFR < 60 ? 'text-amber-600' : 'text-slate-700'} mt-0.5">${p.eGFR}</div>
+                            </div>
+                            <div class="bg-slate-50 p-2 rounded-xl">
+                                <div class="text-[10px] text-slate-400">BMI</div>
+                                <div class="font-bold ${p.bmi >= 28 ? 'text-amber-600' : 'text-slate-700'} mt-0.5">${p.bmi}</div>
+                            </div>
+                        </div>
+
+                        <!-- 剂量状态微调栏 (支持9mg -> 6mg -> 3mg阶梯模拟) -->
+                        <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                            <span class="text-slate-500">当前伊那利塞剂量状态：</span>
+                            <div class="flex items-center gap-1">
+                                ${[9, 6, 3].map(dose => `
+                                    <button onclick="changePatientDose('${p.id}', ${dose})" class="px-2 py-1 rounded-lg font-bold text-[11px] transition ${p.status === 'active' && p.currentDose === dose ? 'bg-medical-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                                        ${dose}mg
+                                    </button>
+                                `).join('')}
+                                <button onclick="pausePatientDrug('${p.id}')" class="px-2 py-1 rounded-lg font-bold text-[11px] transition ${p.status === 'paused' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}">
+                                    暂停
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 当前阶段随访重点 -->
+                        <div class="mt-3 bg-medical-50/80 border border-medical-200/70 rounded-xl p-2.5 text-xs text-medical-900">
+                            <div class="font-bold flex items-center justify-between">
+                                <span><i class="fas fa-calendar-alt mr-1 text-medical-600"></i>${stageInfo.stage}</span>
+                                <span class="text-[11px] text-medical-700">${stageInfo.freq}</span>
+                            </div>
+                            <p class="text-[11px] text-medical-800 mt-1 leading-relaxed">${stageInfo.focus}</p>
+                        </div>
+                    </div>
+
+                    <!-- 录入今日随访FPG与AE触发器 -->
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
+                        <h3 class="font-bold text-sm text-slate-800 mb-2.5 flex items-center justify-between">
+                            <span><i class="fas fa-edit text-medical-600 mr-1.5"></i>本次随访血糖录入与实时判定</span>
+                            <span class="text-[11px] font-normal text-slate-400">目标: FPG ≤ 8.9 mmol/L</span>
+                        </h3>
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <input type="number" step="0.1" id="newFpgInput" value="${p.latestFPG}" placeholder="输入空腹血糖 FPG" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:border-medical-600">
+                                <span class="absolute right-3 top-3 text-xs text-slate-400">mmol/L</span>
+                            </div>
+                            <button onclick="updatePatientFpg('${p.id}')" class="bg-medical-600 hover:bg-medical-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs active:scale-95 transition whitespace-nowrap">
+                                更新并生成决策
+                            </button>
+                        </div>
+
+                        <!-- 快捷其他AE评估入口 -->
+                        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs text-slate-500">同步筛查其他共识重点AE：</span>
+                            <div class="flex gap-1.5">
+                                <button onclick="openQuickAeModal('${p.id}', 'stomatitis')" class="px-2.5 py-1 bg-slate-100 hover:bg-medical-50 text-slate-700 rounded-lg text-[11px] font-medium">口腔炎</button>
+                                <button onclick="openQuickAeModal('${p.id}', 'diarrhea')" class="px-2.5 py-1 bg-slate-100 hover:bg-medical-50 text-slate-700 rounded-lg text-[11px] font-medium">腹泻</button>
+                                <button onclick="openQuickAeModal('${p.id}', 'rash')" class="px-2.5 py-1 bg-slate-100 hover:bg-medical-50 text-slate-700 rounded-lg text-[11px] font-medium">皮疹</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 共识决策矩阵输出卡片 -->
+                    <div class="rounded-2xl border ${theme.border} ${theme.bg} overflow-hidden shadow-xs">
+                        <div class="${theme.header} text-white px-4 py-2.5 flex justify-between items-center gap-2">
+                            <span class="font-bold text-xs truncate">${fpgGradeInfo.grade}</span>
+                            <span class="text-[11px] bg-white/20 px-2 py-0.5 rounded-full font-semibold shrink-0">${fpgGradeInfo.badge}</span>
+                        </div>
+                        <div class="p-4 space-y-3 text-xs ${theme.text}">
+                            <div class="bg-white/80 p-3 rounded-xl border border-white">
+                                <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+                                    <i class="fas fa-capsules text-medical-600"></i> 伊那利塞剂量调整指令：
+                                </div>
+                                <p class="leading-relaxed font-medium">${fpgGradeInfo.drugAction}</p>
+                            </div>
+
+                            <div>
+                                <div class="font-bold mb-1.5">📋 药师标准处置动作 (SOP)：</div>
+                                <ul class="space-y-1.5">
+                                    ${fpgGradeInfo.pharmacistActions.map((act, idx) => `
+                                        <li class="flex items-start gap-2">
+                                            <span class="w-4 h-4 rounded-full bg-white text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">${idx+1}</span>
+                                            <span class="leading-relaxed">${act}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+
+                            <!-- 一键话术生成按钮组 (使用安全引用避免引号冲突) -->
+                            <div class="grid grid-cols-2 gap-2 pt-2">
+                                <button onclick="openScriptByType('patient')" class="bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition">
+                                    <i class="fas fa-comment-medical text-medical-600"></i> 患教沟通话术
+                                </button>
+                                <button onclick="openScriptByType('doctor')" class="bg-slate-800 hover:bg-slate-900 text-white py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition">
+                                    <i class="fas fa-user-md text-amber-400"></i> 医生汇报模板
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 历史血糖监测轨迹 -->
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs">
+                        <h3 class="font-bold text-sm text-slate-800 mb-3">📈 血糖监测与干预时间轴</h3>
+                        <div class="space-y-3 border-l-2 border-medical-200 ml-2 pl-4">
+                            ${p.fpgHistory.slice().reverse().map(item => `
+                                <div class="relative">
+                                    <div class="w-2.5 h-2.5 rounded-full ${item.fpg > 13.9 ? 'bg-rose-500' : item.fpg > 8.9 ? 'bg-amber-500' : 'bg-medical-500'} absolute -left-[21px] top-1 ring-4 ring-white"></div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-slate-700">${item.day}</span>
+                                        <span class="text-xs font-bold ${item.fpg > 13.9 ? 'text-rose-600' : item.fpg > 8.9 ? 'text-amber-600' : 'text-emerald-600'}">FPG: ${item.fpg} mmol/L</span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">${item.note}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        function changePatientDose(patientId, newDose) {
+            const p = patients.find(item => item.id === patientId);
+            if (!p) return;
+            p.status = 'active';
+            p.currentDose = newDose;
+            p.fpgHistory.push({
+                day: `D${p.dayOnDrug}(剂量调整)`,
+                fpg: p.latestFPG,
+                note: `按医嘱调整伊那利塞剂量为 ${newDose}mg qd`
+            });
+            showToast(`已将患者剂量更新为 ${newDose}mg qd`);
+            renderPatientDetailView(patientId);
+        }
+
+        function pausePatientDrug(patientId) {
+            const p = patients.find(item => item.id === patientId);
+            if (!p) return;
+            p.status = 'paused';
+            p.urgentAlert = true;
+            p.alertReason = '伊那利塞暂停用药中，需密切监测恢复阈值';
+            p.fpgHistory.push({
+                day: `D${p.dayOnDrug}(暂停用药)`,
+                fpg: p.latestFPG,
+                note: '执行暂停伊那利塞，提醒停药后血糖可能快速下降防低血糖'
+            });
+            showToast('已标记为暂停用药状态');
+            renderPatientDetailView(patientId);
+        }
+
+        function updatePatientFpg(patientId) {
+            const val = parseFloat(document.getElementById('newFpgInput').value);
+            if (isNaN(val) || val <= 0 || val > 50) {
+                showToast('请输入有效的空腹血糖数值 (mmol/L)');
+                return;
+            }
+            const p = patients.find(item => item.id === patientId);
+            p.latestFPG = val;
+            let note = '正常达标，维持原方案';
+            if (val > 13.9) {
+                p.urgentAlert = true;
+                p.status = 'paused';
+                p.alertReason = `Grade 3+严重高血糖 (${val} mmol/L)，已触发暂停预警`;
+                p.nextFollowUp = '今日立即就医 + 24h跟进';
+                note = `Grade 3+严重升高 (${val})，触发暂停伊那利塞并紧急通知医生`;
+            } else if (val > 8.9) {
+                p.urgentAlert = true;
+                p.alertReason = `FPG ${val} mmol/L (Grade 2)，需加密随访`;
+                p.nextFollowUp = '每2-3天1次 (加密随访)';
+                note = `Grade 2中度升高 (${val})，启动饮食强化并通知医生评估降糖药`;
+            } else {
+                p.urgentAlert = false;
+                p.alertReason = '';
+                note = `FPG ${val} mmol/L，控制在目标范围内`;
+            }
+
+            p.fpgHistory.push({
+                day: `D${p.dayOnDrug}(最新录入)`,
+                fpg: val,
+                note: note
+            });
+
+            showToast(`已更新FPG为 ${val} mmol/L，决策树已刷新`);
+            renderPatientDetailView(patientId);
+        }
+
+        function openScriptByType(type) {
+            const isPatient = type === 'patient';
+            const title = isPatient ? '患教沟通标准话术' : '主治医生病情汇报单';
+            const subtitle = isPatient ? '微信/电话直接告知患者' : '一键复制发送给临床医生';
+            const scriptText = isPatient ? currentActiveScripts.patient : currentActiveScripts.doctor;
+
+            openModal(
+                `<i class="fas fa-clipboard-check text-medical-600"></i><span>${title}</span>`,
+                `
+                    <div class="text-xs text-slate-400">${subtitle}</div>
+                    <div id="modalScriptContent" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-slate-800 text-xs leading-relaxed font-medium select-all">${scriptText}</div>
+                    <div class="bg-amber-50 border border-amber-200/70 p-2.5 rounded-xl text-[11px] text-amber-800">
+                        <i class="fas fa-info-circle mr-1"></i>提示：本话术严格依据《2026版乳腺癌PAM通路抑制剂不良反应管理专家共识》生成，临床最终处方调整由主治医生决定。
+                    </div>
+                `,
+                `
+                    <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold">关闭</button>
+                    <button onclick="copyModalScript()" class="flex-1 py-2.5 rounded-xl bg-medical-600 text-white text-xs font-bold shadow-xs">
+                        <i class="far fa-copy mr-1"></i> 一键复制内容
+                    </button>
+                `
+            );
+        }
+
+        function copyModalScript() {
+            const text = document.getElementById('modalScriptContent')?.innerText || '';
+            copyToClipboard(text);
+            closeModal();
+        }
+
+        function openQuickAeModal(patientId, aeType) {
+            const p = patients.find(item => item.id === patientId);
+            const aeConfigs = {
+                stomatitis: {
+                    title: '口腔炎分级快速处置 (共识SOP)',
+                    grades: [
+                        { g: 'Grade 1 (无症状或轻微症状)', action: '无需调整伊那利塞剂量。避免使用含酒精和过氧化氢衍生物的漱口水，推荐地塞米松 0.1mg/mL 10mL 每日4次含漱预防。' },
+                        { g: 'Grade 2 (中度疼痛，不影响吞咽)', action: '暂停伊那利塞直至改善至 ≤1级！局部使用麻醉剂/糖皮质激素/生长因子。若持续或复发，恢复时降低一个剂量水平。' },
+                        { g: 'Grade 3 (重度疼痛，吞咽受影响)', action: '立即暂停伊那利塞直至改善至 ≤1级，恢复时降低一个剂量水平！强化局部/全身镇痛及抗感染治疗。' },
+                        { g: 'Grade 4 (危及生命)', action: '永久停用伊那利塞！紧急干预治疗。' }
+                    ]
+                },
+                diarrhea: {
+                    title: '腹泻分级快速处置 (共识SOP)',
+                    grades: [
+                        { g: 'Grade 1 (大便<4次/天)', action: '无需调整伊那利塞剂量。调整饮食、补充水分电解质；洛哌丁胺首剂4mg，之后每次不成形便后2mg。' },
+                        { g: 'Grade 2 (大便4-6次/天，生活受限)', action: '暂停伊那利塞直至改善至 ≤1级！加强止泻治疗。若持续或复发，改善至≤1级后降低一个剂量水平。' },
+                        { g: 'Grade 3 (大便≥7次/天，需住院)', action: '暂停伊那利塞直至改善至 ≤1级，恢复时降低一个剂量水平！必要时早期静脉补液。' },
+                        { g: 'Grade 4 (危及生命)', action: '永久停用伊那利塞！紧急住院补液与抢救。' }
+                    ]
+                },
+                rash: {
+                    title: '皮疹分级快速处置 (共识SOP)',
+                    grades: [
+                        { g: 'Grade 1 (<10% BSA，无感染)', action: '无需调整伊那利塞剂量。使用润肤剂、防晒（紫外线防护剂），必要时口服非镇静抗组胺药。' },
+                        { g: 'Grade 2 (10%-30% BSA，无感染)', action: '伊那利塞无需调整剂量！开始/加强局部皮质类固醇和口服抗组胺药，考虑低剂量全身激素（若10天内改善至≤1级可停激素）。' },
+                        { g: 'Grade 3 (>30% BSA 或合并感染)', action: '暂停伊那利塞直至改善至 ≤1级，恢复时降低一个剂量水平！加强局部/全身皮质类固醇及抗组胺/抗感染治疗。' },
+                        { g: 'Grade 4 (严重全身感染/危及生命)', action: '永久停用伊那利塞！立即皮肤科/重症急会诊。' }
+                    ]
+                }
+            };
+
+            const cfg = aeConfigs[aeType];
+            openModal(
+                `<i class="fas fa-notes-medical text-medical-600"></i><span>${cfg.title}</span>`,
+                `
+                    <div class="text-xs text-slate-500 mb-2">患者：<span class="font-bold text-slate-800">${p.name}</span> (当前剂量 ${p.currentDose}mg)</div>
+                    <div class="space-y-2.5">
+                        ${cfg.grades.map(item => `
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                                <div class="font-bold text-slate-800 mb-1">${item.g}</div>
+                                <div class="text-slate-600 leading-relaxed">${item.action}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `,
+                `<button onclick="closeModal()" class="w-full py-2.5 rounded-xl bg-medical-600 text-white text-xs font-bold">我已了解，关闭</button>`
+            );
+        }
+
+        /**
+         * ============================================================================
+         * 视图 3: 首次购药建档与基线风险评估工具
+         * ============================================================================
+         */
+        function renderIntakeView() {
+            const html = `
+                <div class="p-4 space-y-4">
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+                        <div class="flex items-center gap-2 border-b border-slate-100 pb-2.5">
+                            <span class="w-6 h-6 rounded-lg bg-medical-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+                            <h3 class="font-bold text-sm text-slate-800">患者基础信息与肾功能核查</h3>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label class="block text-slate-500 mb-1">患者姓名 *</label>
+                                <input type="text" id="inName" placeholder="例如：张雅琴" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-medical-600">
+                            </div>
+                            <div>
+                                <label class="block text-slate-500 mb-1">年龄 (岁) *</label>
+                                <input type="number" id="inAge" value="52" oninput="evaluateIntakeRisk()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold focus:outline-none focus:border-medical-600">
+                            </div>
+                            <div>
+                                <label class="block text-slate-500 mb-1">BMI (kg/m²) *</label>
+                                <input type="number" step="0.1" id="inBmi" value="26.5" oninput="evaluateIntakeRisk()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold focus:outline-none focus:border-medical-600">
+                            </div>
+                            <div>
+                                <label class="block text-slate-500 mb-1">eGFR (mL/min) *</label>
+                                <input type="number" id="inEgfr" value="85" oninput="evaluateIntakeRisk()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold focus:outline-none focus:border-medical-600">
+                            </div>
+                            <div>
+                                <label class="block text-slate-500 mb-1">基线 FPG (mmol/L)</label>
+                                <input type="number" step="0.1" id="inFpg" value="5.6" oninput="evaluateIntakeRisk()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold focus:outline-none focus:border-medical-600">
+                            </div>
+                            <div>
+                                <label class="block text-slate-500 mb-1">基线 HbA1c (%)</label>
+                                <input type="number" step="0.1" id="inHba1c" value="5.8" oninput="evaluateIntakeRisk()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold focus:outline-none focus:border-medical-600">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-2.5">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-medical-600 text-white text-xs font-bold flex items-center justify-center">2</span>
+                                <h3 class="font-bold text-sm text-slate-800">高血糖危险因素评估卡 (共识标准)</h3>
+                            </div>
+                            <span class="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-medium">≥1项即高危</span>
+                        </div>
+
+                        <div class="space-y-2 text-xs">
+                            <label class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 cursor-pointer">
+                                <input type="checkbox" class="risk-chk accent-medical-600 w-4 h-4" value="糖尿病 / 糖尿病前期病史" onchange="evaluateIntakeRisk()">
+                                <span>有糖尿病或糖尿病前期病史</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 cursor-pointer">
+                                <input type="checkbox" class="risk-chk accent-medical-600 w-4 h-4" value="糖尿病家族史" onchange="evaluateIntakeRisk()">
+                                <span>一级亲属糖尿病家族史</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 cursor-pointer">
+                                <input type="checkbox" class="risk-chk accent-medical-600 w-4 h-4" value="妊娠糖尿病史/多囊卵巢" onchange="evaluateIntakeRisk()">
+                                <span>妊娠糖尿病史 / 多囊卵巢综合征</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 cursor-pointer">
+                                <input type="checkbox" class="risk-chk accent-medical-600 w-4 h-4" value="心血管病/高血压/血脂异常" onchange="evaluateIntakeRisk()">
+                                <span>合并心血管疾病 / 高血压 / 血脂异常</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 cursor-pointer">
+                                <input type="checkbox" class="risk-chk accent-medical-600 w-4 h-4" value="长期使用糖皮质激素" onchange="evaluateIntakeRisk()">
+                                <span>长期使用糖皮质激素或久坐生活方式</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="intakeResultCard" class="rounded-2xl p-4 border transition-all"></div>
+
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-2 text-xs">
+                        <div class="font-bold text-slate-800 mb-1">📦 首次购药药师必做动作核查 (SOP)：</div>
+                        <label class="flex items-center gap-2 text-slate-600">
+                            <input type="checkbox" checked class="accent-medical-600"> <span>演示血糖仪操作，告知“中靶效应”减轻患者焦虑</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-slate-600">
+                            <input type="checkbox" checked class="accent-medical-600"> <span>明确首周每3天1次测FPG；告知FPG>8.9联系药师、>13.9立即就医</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-slate-600">
+                            <input type="checkbox" checked class="accent-medical-600"> <span>指导口腔护理：禁用含酒精及过氧化氢漱口水，建议备地塞米松含漱液</span>
+                        </label>
+                    </div>
+
+                    <button onclick="saveNewPatient()" class="w-full bg-medical-600 hover:bg-medical-700 text-white font-bold py-3.5 rounded-2xl shadow-md text-sm active:scale-[0.99] transition">
+                        完成建档并加入随访工作台
+                    </button>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+            evaluateIntakeRisk();
+        }
+
+        function evaluateIntakeRisk() {
+            const age = parseFloat(document.getElementById('inAge')?.value || 0);
+            const bmi = parseFloat(document.getElementById('inBmi')?.value || 0);
+            const egfr = parseFloat(document.getElementById('inEgfr')?.value || 90);
+            const hba1c = parseFloat(document.getElementById('inHba1c')?.value || 5.0);
+            const fpg = parseFloat(document.getElementById('inFpg')?.value || 5.0);
+
+            const detectedFactors = [];
+            if (age >= 45) detectedFactors.push(`年龄≥45岁 (${age}岁)`);
+            if (bmi >= 28) detectedFactors.push(`BMI≥28 kg/m² 中国肥胖标准 (${bmi})`);
+            if (hba1c >= 5.7) detectedFactors.push(`HbA1c≥5.7% 糖尿病前期 (${hba1c}%)`);
+            if (fpg >= 6.1) detectedFactors.push(`基线空腹血糖受损 (${fpg} mmol/L)`);
+
+            document.querySelectorAll('.risk-chk:checked').forEach(chk => {
+                detectedFactors.push(chk.value);
+            });
+
+            const isHighRisk = detectedFactors.length >= 1;
+            const recDose = (egfr >= 30 && egfr < 60) ? 6 : (egfr < 30 ? 0 : 9);
+
+            const card = document.getElementById('intakeResultCard');
+            if (!card) return { isHighRisk, detectedFactors, recDose };
+
+            card.className = `rounded-2xl p-4 border ${isHighRisk ? 'bg-amber-50 border-amber-300' : 'bg-emerald-50 border-emerald-200'} space-y-2.5`;
+            card.innerHTML = `
+                <div class="flex justify-between items-center gap-2">
+                    <span class="font-bold text-sm ${isHighRisk ? 'text-amber-900' : 'text-emerald-900'}">
+                        ${isHighRisk ? '⚠️ 评估结果：高血糖高风险人群' : '✅ 评估结果：高血糖常规风险人群'}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold shrink-0 ${recDose === 6 ? 'bg-amber-600 text-white' : recDose === 0 ? 'bg-rose-600 text-white' : 'bg-medical-600 text-white'}">
+                        推荐起始剂量: ${recDose === 0 ? '重度肾损慎用' : recDose + 'mg qd'}
+                    </span>
+                </div>
+
+                ${egfr >= 30 && egfr < 60 ? `
+                    <div class="bg-white/90 p-2 rounded-xl text-xs text-amber-800 border border-amber-200 font-medium">
+                        <i class="fas fa-kidneys mr-1"></i><b>说明书肾功能剂量提示：</b>中度肾功能损害 (eGFR 30至&lt;60 mL/min) 患者，伊那利塞推荐起始剂量为 <b>6mg</b>（2片3mg）每日一次！
+                    </div>
+                ` : ''}
+
+                <div class="text-xs ${isHighRisk ? 'text-amber-900' : 'text-emerald-800'} leading-relaxed">
+                    ${isHighRisk ? `
+                        <div class="font-semibold mb-1">命中危险因素 (${detectedFactors.length}项)：${detectedFactors.join('、')}</div>
+                        <div class="bg-white/80 p-2.5 rounded-xl border border-amber-200/80 space-y-1">
+                            <div>💊 <b>共识预防策略：</b>针对高风险患者，建议与临床医生沟通，可于<b>第1周期第1天 (C1D1) 预防性使用二甲双胍</b>！</div>
+                            <div>🩸 <b>强化监测频率：</b>除常规第1周每3天监测外，建议高危患者每日1次空腹自我血糖监测。</div>
+                        </div>
+                    ` : `
+                        <div>未发现关键高血糖危险因素。按常规日程表监测空腹血糖：<b>第1周每3天1次 → 第2-4周每周1次 → 第5-12周每2周1次 → 此后每4周1次</b>。</div>
+                    `}
+                </div>
+            `;
+            return { isHighRisk, detectedFactors, recDose };
+        }
+
+        function saveNewPatient() {
+            const name = document.getElementById('inName').value.trim();
+            if (!name) {
+                showToast('请填写患者姓名');
+                return;
+            }
+            const age = parseInt(document.getElementById('inAge').value) || 50;
+            const bmi = parseFloat(document.getElementById('inBmi').value) || 23.0;
+            const egfr = parseInt(document.getElementById('inEgfr').value) || 85;
+            const fpg = parseFloat(document.getElementById('inFpg').value) || 5.4;
+            const hba1c = parseFloat(document.getElementById('inHba1c').value) || 5.5;
+            const evalRes = evaluateIntakeRisk();
+
+            const newPatient = {
+                id: 'P' + Date.now(),
+                name: name,
+                age: age,
+                gender: '女',
+                phone: '138****0000',
+                diagnosis: 'HR+/HER2- 晚期乳腺癌 (PIK3CA突变)',
+                regimen: '伊那利塞 + 哌柏西利 + 氟维司群',
+                startDate: '2026-11-19',
+                dayOnDrug: 1,
+                cycle: 1,
+                currentDose: evalRes.recDose || 9,
+                status: 'active',
+                eGFR: egfr,
+                bmi: bmi,
+                baselineFPG: fpg,
+                baselineHbA1c: hba1c,
+                riskFactors: evalRes.detectedFactors,
+                riskLevel: evalRes.isHighRisk ? 'high' : 'low',
+                prophylacticMetformin: evalRes.isHighRisk,
+                currentAntidiabetic: evalRes.isHighRisk ? '建议C1D1预防性启用二甲双胍' : '暂未用药',
+                latestFPG: fpg,
+                fpgHistory: [
+                    { day: 'D1(今日建档)', fpg: fpg, note: evalRes.isHighRisk ? '高危基线建档，已发关爱包并建议预防性二甲双胍' : '常规风险基线建档，起始剂量' + (evalRes.recDose || 9) + 'mg' }
+                ],
+                activeAEs: [],
+                nextFollowUp: 'D4 (第1周每3天随访)',
+                urgentAlert: false,
+                alertReason: ''
+            };
+
+            patients.unshift(newPatient);
+            showToast(`患者 ${name} 建档成功！`);
+            openPatientDetail(newPatient.id);
+        }
+
+        /**
+         * ============================================================================
+         * 视图 4: 独立不良反应分级与剂量调整决策引擎
+         * ============================================================================
+         */
+        function renderDecisionEngineView() {
+            const subTabs = [
+                { id: 'hyperglycemia', label: '高血糖决策' },
+                { id: 'stomatitis', label: '口腔炎' },
+                { id: 'diarrhea', label: '腹泻' },
+                { id: 'rash', label: '皮疹' },
+                { id: 'doseCalc', label: '阶梯减量器' }
+            ];
+
+            let subHtml = '';
+            if (state.decisionSubTab === 'hyperglycemia') {
+                subHtml = `
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+                        <div class="text-xs font-bold text-slate-800 flex items-center justify-between">
+                            <span>输入空腹血糖 (FPG) 交互式推演</span>
+                            <span class="text-medical-600">2026高血糖专家共识</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="number" step="0.1" id="calcFpgInput" value="10.2" oninput="runInteractiveFpgCalc()" class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-base font-bold text-slate-800">
+                            <span class="text-xs text-slate-500 font-medium">mmol/L</span>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs pt-1">
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="checkbox" id="calcKetoneChk" onchange="runInteractiveFpgCalc()" class="accent-rose-600 w-4 h-4 shrink-0">
+                                <span class="text-rose-700 font-semibold">伴恶心呕吐/腹痛/呼吸深快(疑似酮症/euDKA)</span>
+                            </label>
+                        </div>
+                        <div id="interactiveFpgResult" class="pt-2"></div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-2.5">
+                        <h4 class="font-bold text-xs text-slate-800">💊 PI3K抑制剂相关高血糖降糖药物选择路径</h4>
+                        <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs">
+                            <div class="font-bold text-emerald-900">1L 首选一线：二甲双胍</div>
+                            <div class="text-emerald-800 text-[11px] mt-0.5">不激活PI3K通路且改善胰岛素抵抗；高危患者可于C1D1预防性使用。</div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-xs">
+                            <div class="font-bold text-teal-900">2L 二线联用：SGLT2i / 噻唑烷二酮 / α-糖苷酶抑制剂</div>
+                            <div class="text-teal-800 text-[11px] mt-0.5">达格列净/恩格列净、吡格列酮、阿卡波糖（额外可选GLP-1RA、DPP-4i）。<br><span class="text-rose-600 font-semibold">⚠️ 警示：用SGLT2i若出现乏力恶心腹痛，即使血糖&lt;11.1也须查血酮排除euDKA！</span></div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">
+                            <div class="font-bold text-amber-900">3L 三线：磺脲类 / 格列奈类</div>
+                            <div class="text-amber-800 text-[11px] mt-0.5">刺激胰岛素分泌，停用伊那利塞后须及时减停以防严重低血糖。</div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs">
+                            <div class="font-bold text-rose-900">末线 (常规不优先推荐)：胰岛素</div>
+                            <div class="text-rose-800 text-[11px] mt-0.5">外源性胰岛素可反馈重新激活PI3K/AKT/mTOR通路削弱抗肿瘤疗效，仅作为最后一线在内分泌科指导下短期使用。</div>
+                        </div>
+                    </div>
+                `;
+            } else if (state.decisionSubTab === 'doseCalc') {
+                subHtml = `
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-4">
+                        <h3 class="font-bold text-sm text-slate-800">💊 伊那利塞 (Itovebi®) 阶梯减量与规格组合</h3>
+                        <p class="text-xs text-slate-500">9mg为常规起始剂量，按 <b>9mg → 6mg → 3mg</b> 减量；若不能耐受第二次减量（3mg），则永久停止治疗。</p>
+                        
+                        <div class="space-y-3">
+                            <div class="p-3.5 rounded-2xl bg-medical-50 border border-medical-200 flex items-center justify-between gap-2">
+                                <div>
+                                    <span class="text-[10px] font-bold bg-medical-600 text-white px-2 py-0.5 rounded-md">初始推荐剂量</span>
+                                    <div class="font-bold text-base text-slate-800 mt-1">9 mg 每日一次</div>
+                                    <div class="text-xs text-slate-600">1片 9mg 椭圆形片剂，随餐或单独服用</div>
+                                </div>
+                                <div class="pill-9mg w-14 h-7 flex items-center justify-center text-white text-[10px] font-bold tracking-wider shrink-0">INA 9</div>
+                            </div>
+
+                            <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-2">
+                                <div>
+                                    <span class="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-md">第1次减量 (及中度肾损起始)</span>
+                                    <div class="font-bold text-base text-slate-800 mt-1">6 mg 每日一次</div>
+                                    <div class="text-xs text-slate-600">2片 3mg 圆形片剂同时服用</div>
+                                </div>
+                                <div class="flex gap-1 shrink-0">
+                                    <div class="pill-3mg w-8 h-8 flex items-center justify-center text-white text-[9px] font-bold">INA 3</div>
+                                    <div class="pill-3mg w-8 h-8 flex items-center justify-center text-white text-[9px] font-bold">INA 3</div>
+                                </div>
+                            </div>
+
+                            <div class="p-3.5 rounded-2xl bg-orange-50 border border-orange-200 flex items-center justify-between gap-2">
+                                <div>
+                                    <span class="text-[10px] font-bold bg-orange-600 text-white px-2 py-0.5 rounded-md">第2次减量 (最低有效耐受量)</span>
+                                    <div class="font-bold text-base text-slate-800 mt-1">3 mg 每日一次</div>
+                                    <div class="text-xs text-slate-600">1片 3mg 圆形片剂；若仍不耐受则永久停药</div>
+                                </div>
+                                <div class="pill-3mg w-8 h-8 flex items-center justify-center text-white text-[9px] font-bold shrink-0">INA 3</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1.5">
+                            <div class="font-bold text-slate-800">🗓️ 三联方案28天标准给药日历：</div>
+                            <div>• <b>伊那利塞：</b>D1 - D28 每日一次口服（连续不间断）</div>
+                            <div>• <b>哌柏西利：</b>125mg qd，D1 - D21 连续口服21天，D22 - D28 停药7天</div>
+                            <div>• <b>氟维司群：</b>500mg 肌注，C1D1 与 C1D15 各一次，此后每28天周期D1注射</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const matrixData = {
+                    stomatitis: {
+                        name: '口腔炎 / 粘膜炎症',
+                        stats: 'INAVO120发生率：全级别 51.2% | 3级 5.6% | 4级 0% | 中位发病 13天',
+                        prevention: '前8周预防：10mL 地塞米松 0.1mg/mL 含漱，每日4次；禁用含酒精和过氧化氢衍生物漱口水。第2、4、8周进行口腔临床评估。',
+                        rows: [
+                            { g: '1级', desc: '无症状或轻微症状，无需干预', dose: '无需调整剂量', care: '避免酒精/过氧化氢漱口水，密切观察' },
+                            { g: '2级', desc: '中度疼痛，不影响吞咽，需改良饮食', dose: '暂停直至 ≤1级；若持续或复发则降1个剂量', care: '开始/加强局部麻醉剂、糖皮质激素、生长因子' },
+                            { g: '3级', desc: '重度疼痛，吞咽受影响', dose: '暂停直至 ≤1级，恢复时降低1个剂量水平', care: '加强局部/全身用药(抗真菌/抗病毒/镇痛)' },
+                            { g: '4级', desc: '危及生命，需紧急干预', dose: '永久停药', care: '紧急多学科急诊处理' }
+                        ]
+                    },
+                    diarrhea: {
+                        name: '腹泻',
+                        stats: 'INAVO120发生率：全级别 48.1% | 3级 3.7% | 4级 0% | 中位发病 15天',
+                        prevention: '调整饮食结构，及时补充水分和电解质；家中常备洛哌丁胺（首剂4mg，每次不成形便后2mg）。',
+                        rows: [
+                            { g: '1级', desc: '大便增加 <4次/天，对日常生活无影响', dose: '无需调整剂量', care: '饮食调整+补液+洛哌丁胺对症' },
+                            { g: '2级', desc: '大便增加 4-6次/天，日常生活受限', dose: '暂停直至 ≤1级；若持续或复发则降1个剂量', care: '加强止泻药物治疗，监测电解质' },
+                            { g: '3级', desc: '大便增加 ≥7次/天，需住院，不能自理', dose: '暂停直至 ≤1级，恢复时降低1个剂量水平', care: '加强止泻，必要时早期静脉补液' },
+                            { g: '4级', desc: '危及生命，需紧急干预', dose: '永久停药', care: '紧急住院抢救与静脉补液' }
+                        ]
+                    },
+                    rash: {
+                        name: '皮疹',
+                        stats: 'INAVO120发生率：全级别 25.3% | 3-4级 0% | 中位发病 29天',
+                        prevention: '注意防晒并使用紫外线防护剂，日常使用温和润肤剂，避免接触刺激性物质。',
+                        rows: [
+                            { g: '1级', desc: '覆盖面积 <10% BSA，无感染证据', dose: '无需调整剂量', care: '润肤剂，必要时口服非镇静抗组胺药' },
+                            { g: '2级', desc: '覆盖面积 10%-30% BSA，无感染证据', dose: '伊那利塞无需调整剂量', care: '局部皮质类固醇+口服抗组胺药，可短期低剂量全身激素' },
+                            { g: '3级', desc: '覆盖面积 >30% BSA 或存在感染证据', dose: '暂停直至 ≤1级，恢复时降低1个剂量水平', care: '加强局部/全身皮质类固醇+抗组胺+抗感染' },
+                            { g: '4级', desc: '严重全身感染或危及生命的皮肤反应', dose: '永久停药', care: '需静脉抗生素及皮肤科紧急会诊' }
+                        ]
+                    }
+                }[state.decisionSubTab];
+
+                subHtml = `
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-800">${matrixData.name}分级管理矩阵</h3>
+                            <div class="text-[11px] text-medical-700 font-medium mt-0.5">${matrixData.stats}</div>
+                        </div>
+                        <div class="bg-medical-50 border border-medical-200/70 p-2.5 rounded-xl text-xs text-medical-900">
+                            <b>🛡️ 预防与监测要点：</b>${matrixData.prevention}
+                        </div>
+                        <div class="space-y-2.5">
+                            ${matrixData.rows.map(r => `
+                                <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 text-xs space-y-1">
+                                    <div class="font-bold text-slate-800">${r.g}：${r.desc}</div>
+                                    <div class="text-medical-700 font-bold"><i class="fas fa-pills mr-1"></i>剂量决策：${r.dose}</div>
+                                    <div class="text-slate-600"><i class="fas fa-hand-holding-medical mr-1"></i>临床处理：${r.care}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const html = `
+                <div class="p-4 space-y-4">
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar bg-slate-200/70 p-1 rounded-2xl">
+                        ${subTabs.map(t => `
+                            <button onclick="switchDecisionSubTab('${t.id}')" class="px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition flex-1 ${state.decisionSubTab === t.id ? 'bg-white text-medical-700 shadow-xs' : 'text-slate-600'}">
+                                ${t.label}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    ${subHtml}
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+
+            if (state.decisionSubTab === 'hyperglycemia') {
+                runInteractiveFpgCalc();
+            }
+        }
+
+        function switchDecisionSubTab(id) {
+            state.decisionSubTab = id;
+            renderDecisionEngineView();
+        }
+
+        function runInteractiveFpgCalc() {
+            const fpg = parseFloat(document.getElementById('calcFpgInput')?.value || 0);
+            const hasKetone = document.getElementById('calcKetoneChk')?.checked;
+            const out = document.getElementById('interactiveFpgResult');
+            if (!out) return;
+
+            if (hasKetone || fpg >= 16.7) {
+                out.innerHTML = `
+                    <div class="p-3 rounded-xl bg-rose-600 text-white text-xs space-y-1.5">
+                        <div class="font-bold text-sm">🚨 代谢紧急情况预警！(FPG≥16.7 或 疑似酮症/DKA)</div>
+                        <p class="leading-relaxed opacity-95">必须立即暂停伊那利塞！患者立即前往急诊或启动内分泌代谢科紧急会诊，即刻检测血酮体（首选血清β-羟丁酸）及动脉血气。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (fpg <= 5.6) {
+                out.innerHTML = `<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">✅ 正常空腹血糖范围，继续按周期日程表监测，维持原剂量。</div>`;
+            } else if (fpg <= 8.9) {
+                out.innerHTML = `<div class="p-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs space-y-1"><div class="font-bold">Grade 1 (ULN &lt; FPG ≤ 8.9 mmol/L)</div><div>伊那利塞<b>无需调整剂量</b>。强化低碳水饮食及运动，高危患者可启动/强化口服降糖药（首选二甲双胍）。</div></div>`;
+            } else if (fpg <= 13.9) {
+                out.innerHTML = `<div class="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs space-y-1"><div class="font-bold">Grade 2 (8.9 &lt; FPG ≤ 13.9 mmol/L)</div><div><b>伊那利塞可维持原剂量继续治疗</b>（区别于其他PI3Ki，伊那利塞2级高血糖无需立即停药），同时立即启动/强化二甲双胍等降糖药，加密至每2-3天随访。若持续7天 &gt;11.1-13.9 mmol/L，咨询内分泌科医生。</div></div>`;
+            } else if (fpg <= 27.8) {
+                out.innerHTML = `<div class="p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs space-y-1"><div class="font-bold">Grade 3 (13.9 &lt; FPG ≤ 27.8 mmol/L)</div><div><b>立即暂停伊那利塞直至 FPG ≤ 8.9 mmol/L！</b>评估酮症并强化降糖。若 ≤7天恢复至≤8.9，按相同剂量恢复；若 &gt;7天恢复或30天内复发，<b>降低一个剂量水平</b>。</div></div>`;
+            } else {
+                out.innerHTML = `<div class="p-3 rounded-xl bg-rose-100 border border-rose-400 text-rose-950 text-xs space-y-1"><div class="font-bold">Grade 4 (FPG &gt; 27.8 mmol/L)</div><div><b>立即暂停伊那利塞！</b>评估容量不足和酮症并适量补液，咨询内分泌科。降至 ≤8.9 mmol/L 后<b>降低一个剂量水平</b>恢复；若 ≤30天内复发，<b>永久停药</b>。</div></div>`;
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 视图 5: 专家共识循证库与饮食/其他AE速查
+         * ============================================================================
+         */
+        function renderKnowledgeView() {
+            const html = `
+                <div class="p-4 space-y-4">
+                    <div class="bg-gradient-to-br from-medical-800 to-medical-900 text-white rounded-2xl p-4 shadow-sm space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold bg-white/15 px-2.5 py-0.5 rounded-full">INAVO120 关键循证数据</span>
+                            <span class="text-[11px] text-medical-200">中位随访 34.2 个月</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-white/10 p-2.5 rounded-xl">
+                                <div class="text-lg font-bold text-amber-300">17.2月</div>
+                                <div class="text-[10px] text-medical-100 mt-0.5">mPFS (vs 7.3月)<br>进展风险降58%</div>
+                            </div>
+                            <div class="bg-white/10 p-2.5 rounded-xl">
+                                <div class="text-lg font-bold text-emerald-300">34.0月</div>
+                                <div class="text-[10px] text-medical-100 mt-0.5">mOS (vs 27.0月)<br>死亡风险降33%</div>
+                            </div>
+                            <div class="bg-white/10 p-2.5 rounded-xl">
+                                <div class="text-lg font-bold text-sky-300">仅 6.8%</div>
+                                <div class="text-[10px] text-medical-100 mt-0.5">因AE停药率<br>高血糖停药仅0.6%</div>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-medical-100 leading-relaxed">
+                            💡 <b>“在靶效应”患教金句：</b>高血糖是PI3Kα抑制剂阻断GLUT4转运的机制性“在靶效应”，ESMO数据显示发生高血糖亚组患者中位PFS高达21.0个月，科学管理可管可控可逆，切勿因恐慌自行停药！
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-2.5 text-xs">
+                        <h3 class="font-bold text-sm text-slate-800">🥗 2026共识：饮食与运动非药物干预处方</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
+                                <div class="font-bold text-emerald-900 mb-1">✅ 推荐饮食结构</div>
+                                <ul class="text-[11px] text-emerald-800 space-y-1">
+                                    <li>• <b>适度低碳水：</b>每日约60-130g，全谷物/燕麦/藜麦 ≥1/3</li>
+                                    <li>• <b>蔬菜：</b>≥500g/天，深色蔬菜过半</li>
+                                    <li>• <b>蛋白与水果：</b>鱼虾禽豆优先；低GI水果不榨汁</li>
+                                </ul>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-100">
+                                <div class="font-bold text-rose-900 mb-1">❌ 禁忌与注意</div>
+                                <ul class="text-[11px] text-rose-800 space-y-1">
+                                    <li>• <b>忌食：</b>白米饭/馒头过量、精制糖、含糖饮料、饮酒</li>
+                                    <li>• <b>慎用生酮：</b>不常规推荐生酮饮食(&lt;50g碳水/日)，防酮症风险</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-700">
+                            <b>🏃 运动处方：</b>每周 ≥3次适度有氧运动，累计 <b>150分钟</b>（建议餐后30min开始，每次30-45min）；年轻患者结合抗阻训练，&gt;65岁老年患者侧重灵活性与平衡训练。
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs space-y-2.5 text-xs">
+                        <h3 class="font-bold text-sm text-slate-800">🩺 其余共识重点不良反应监测清单</h3>
+                        <div class="divide-y divide-slate-100">
+                            <div class="py-2">
+                                <div class="font-bold text-slate-800">1. 血液学毒性 (中性粒细胞减少全级别 88.9%, 3-4级 80.2%)</div>
+                                <div class="text-slate-600 text-[11px] mt-0.5">主要与联合哌柏西利相关。随访第15天务必提醒复查血常规，必要时咨询血液科或预防性使用G-CSF。</div>
+                            </div>
+                            <div class="py-2">
+                                <div class="font-bold text-slate-800">2. 肝功能损伤</div>
+                                <div class="text-slate-600 text-[11px] mt-0.5">治疗前评估基线肝功能，定期随访转氨酶与胆红素，必要时给予保肝、退黄药物并按说明书调整剂量。</div>
+                            </div>
+                            <div class="py-2">
+                                <div class="font-bold text-slate-800">3. 非感染性肺炎 (ILD/肺炎)</div>
+                                <div class="text-slate-600 text-[11px] mt-0.5">若患者出现新发或加重的咳嗽、呼吸困难、缺氧，立即排查感染并考虑胸部CT、肺功能检查，咨询呼吸科专家。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        // 启动渲染
+        document.addEventListener('DOMContentLoaded', function() {
+            switchTab('workbench');
+        });
+    </script>
+</body>
+</html>
